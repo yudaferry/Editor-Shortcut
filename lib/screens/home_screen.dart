@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final DatabaseService _databaseService = DatabaseService();
   final LauncherService _launcherService = LauncherService();
   final PathService _pathService = PathService();
-  
+
   List<Project> _projects = [];
   List<Editor> _editors = [];
   List<String> _groups = ['All'];
@@ -37,25 +37,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       AppLogger.info('📋 Loading projects, editors, and groups...');
       final projects = await _databaseService.getProjects();
       final editors = await _databaseService.getEditors();
       final groups = await _databaseService.getDistinctGroups();
-      
+
       setState(() {
         _projects = projects;
         _editors = editors;
         _groups = ['All', ...groups];
         _isLoading = false;
       });
-      
-      AppLogger.info('✅ Loaded ${projects.length} projects, ${editors.length} editors, and ${groups.length} groups');
+
+      AppLogger.info(
+        '✅ Loaded ${projects.length} projects, ${editors.length} editors, and ${groups.length} groups',
+      );
     } catch (e, stackTrace) {
       AppLogger.error('❌ Failed to load projects', e, stackTrace);
       setState(() => _isLoading = false);
-      
+
       // Don't show error in UI, just log it
       // if (mounted) {
       //   ScaffoldMessenger.of(context).showSnackBar(
@@ -67,46 +69,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Project> get _filteredProjects {
     var filtered = _projects;
-    
+
     // Filter by group
     if (_selectedGroup != 'All') {
       filtered = filtered.where((p) => p.group == _selectedGroup).toList();
     }
-    
+
     // Filter by search query
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((p) => 
-        p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        p.path.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
+      filtered =
+          filtered
+              .where(
+                (p) =>
+                    p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                    p.path.toLowerCase().contains(_searchQuery.toLowerCase()),
+              )
+              .toList();
     }
-    
+
     return filtered;
   }
 
-
-
   Future<void> _launchWithEditor(Project project, String editorName) async {
     AppLogger.info('🚀 Launching ${project.name} with $editorName');
-    
+
     try {
       final editor = _editors.firstWhere(
         (e) => e.name.toLowerCase() == editorName.toLowerCase(),
         orElse: () => throw Exception('Editor $editorName not found'),
       );
-      final success = await _launcherService.launchProjectAsync(project, editor);
-      
+      final success = await _launcherService.launchProjectAsync(
+        project,
+        editor,
+      );
+
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to launch ${project.name} with $editorName')),
+          SnackBar(
+            content: Text('Failed to launch ${project.name} with $editorName'),
+          ),
         );
       }
     } catch (e) {
       AppLogger.error('❌ Error launching project', e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Editor $editorName not found')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Editor $editorName not found')));
       }
     }
   }
@@ -117,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) => AddProjectScreen(project: project),
       ),
     );
-    
+
     if (result == true) {
       _loadData();
     }
@@ -126,30 +135,33 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _deleteProject(Project project) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Project'),
-        content: Text('Are you sure you want to remove "${project.name}" from the list?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Project'),
+            content: Text(
+              'Are you sure you want to remove "${project.name}" from the list?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
-    
+
     if (confirmed == true) {
       await _databaseService.deleteProject(project.id!);
       _loadData();
-      
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${project.name} removed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${project.name} removed')));
       }
     }
   }
@@ -165,31 +177,49 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _launchWithDefaultEditor(Project project) async {
     AppLogger.info('🚀 Launching ${project.name} with default editor');
-    
+
     try {
       final defaultEditor = await _databaseService.getDefaultEditor();
       if (defaultEditor != null) {
-        final success = await _launcherService.launchProjectAsync(project, defaultEditor);
-        
+        final success = await _launcherService.launchProjectAsync(
+          project,
+          defaultEditor,
+        );
+
         if (!success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to launch ${project.name} with ${defaultEditor.name}')),
+            SnackBar(
+              content: Text(
+                'Failed to launch ${project.name} with ${defaultEditor.name}',
+              ),
+            ),
           );
         }
       } else {
         // If no default editor, try to launch with the first available editor
         if (_editors.isNotEmpty) {
-          final success = await _launcherService.launchProjectAsync(project, _editors.first);
-          
+          final success = await _launcherService.launchProjectAsync(
+            project,
+            _editors.first,
+          );
+
           if (!success && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to launch ${project.name} with ${_editors.first.name}')),
+              SnackBar(
+                content: Text(
+                  'Failed to launch ${project.name} with ${_editors.first.name}',
+                ),
+              ),
             );
           }
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('No editors available. Please add editors first.')),
+              const SnackBar(
+                content: Text(
+                  'No editors available. Please add editors first.',
+                ),
+              ),
             );
           }
         }
@@ -197,10 +227,20 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       AppLogger.error('❌ Error launching project', e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error launching project: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error launching project: $e')));
       }
+    }
+  }
+
+  Future<void> _navigateToAddProject() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (context) => const AddProjectScreen()),
+    );
+
+    if (result == true) {
+      _loadData();
     }
   }
 
@@ -209,25 +249,49 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Project Manager'),
+        elevation: 0,
+        shape: Border(
+          bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+        ),
         actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const EditorManagementScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.edit_note_outlined),
+            label: const Text('Editors'),
+          ),
           IconButton(
             onPressed: _toggleFullScreen,
             icon: const Icon(Icons.fullscreen),
-            tooltip: 'Toggle Full Screen (F11)',
+            tooltip: 'Toggle Full Screen',
           ),
+          IconButton(
+            onPressed: () => windowManager.close(),
+            icon: const Icon(Icons.close),
+            tooltip: 'Close Window',
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
           // Search and filter bar
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     decoration: const InputDecoration(
-                      hintText: 'Search projects...',
+                      hintText: 'Search projects by name or path...',
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(),
                       isDense: true,
@@ -240,10 +304,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 16),
                 DropdownButton<String>(
                   value: _selectedGroup,
-                  items: _groups.map((group) => DropdownMenuItem(
-                    value: group,
-                    child: Text(group),
-                  )).toList(),
+                  items:
+                      _groups
+                          .map(
+                            (group) => DropdownMenuItem(
+                              value: group,
+                              child: Text(group),
+                            ),
+                          )
+                          .toList(),
                   onChanged: (value) {
                     if (value != null) {
                       setState(() => _selectedGroup = value);
@@ -253,140 +322,78 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          
+
           // Projects list
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredProjects.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No projects found.\nTap + to add your first project.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      )
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Responsive grid: more columns on wider screens
-                          int crossAxisCount;
-                          if (constraints.maxWidth > 1400) {
-                            crossAxisCount = 5; // Very wide screens
-                          } else if (constraints.maxWidth > 1100) {
-                            crossAxisCount = 4; // Large screens
-                          } else if (constraints.maxWidth > 800) {
-                            crossAxisCount = 3; // Medium screens
-                          } else {
-                            crossAxisCount = 2; // Small screens
-                          }
-                          
-                          return GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              crossAxisSpacing: 4,
-                              mainAxisSpacing: 4,
-                              childAspectRatio: 2.5, // Ultra compact - much wider than tall
-                            ),
-                            itemCount: _filteredProjects.length,
-                            itemBuilder: (context, index) {
-                              final project = _filteredProjects[index];
-                              return ProjectCard(
-                                project: project,
-                                pathService: _pathService,
-                                editors: _editors,
-                                onLaunchVSCode: () => _launchWithEditor(project, 'VS Code'),
-                                onLaunchCursor: () => _launchWithEditor(project, 'Cursor'),
-                                onLaunchWindsurf: () => _launchWithEditor(project, 'Windsurf'),
-                                onLaunchWithDefault: () => _launchWithDefaultEditor(project),
-                                onEdit: () => _editProject(project),
-                                onDelete: () => _deleteProject(project),
-                              );
-                            },
-                          );
-                        },
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _filteredProjects.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No projects found.\nTap the + button to add one.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
+                    )
+                    : LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Responsive grid: more columns on wider screens
+                        int crossAxisCount;
+                        if (constraints.maxWidth > 1600) {
+                          crossAxisCount = 5;
+                        } else if (constraints.maxWidth > 1200) {
+                          crossAxisCount = 4;
+                        } else if (constraints.maxWidth > 800) {
+                          crossAxisCount = 3;
+                        } else {
+                          crossAxisCount = 2;
+                        }
+
+                        return GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 6.0,
+                              ),
+                          itemCount: _filteredProjects.length,
+                          itemBuilder: (context, index) {
+                            final project = _filteredProjects[index];
+                            return ProjectGridItem(
+                              project: project,
+                              editors: _editors,
+                              onLaunchWithDefault:
+                                  () => _launchWithDefaultEditor(project),
+                              onLaunchVSCode:
+                                  () => _launchWithEditor(project, 'VS Code'),
+                              onLaunchCursor:
+                                  () => _launchWithEditor(project, 'Cursor'),
+                              onLaunchWindsurf:
+                                  () => _launchWithEditor(project, 'Windsurf'),
+                              onEdit: () => _editProject(project),
+                              onDelete: () => _deleteProject(project),
+                            );
+                          },
+                        );
+                      },
+                    ),
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            // Manage Editor Button
-            Expanded(
-              child: TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const EditorManagementScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.code, size: 18),
-                label: const Text('Manage Editor'),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Add Project Button
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(
-                      builder: (context) => const AddProjectScreen(),
-                    ),
-                  );
-                  
-                  if (result == true) {
-                    _loadData();
-                  }
-                },
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Project'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Close Button
-            Expanded(
-              child: TextButton.icon(
-                onPressed: () async {
-                  await windowManager.close();
-                },
-                icon: const Icon(Icons.close, size: 18),
-                label: const Text('Close'),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-              ),
-            ),
-          ],
-        ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToAddProject,
+        label: const Text('Add Project'),
+        icon: const Icon(Icons.add),
       ),
     );
   }
 }
 
-class ProjectCard extends StatelessWidget {
+class ProjectGridItem extends StatelessWidget {
   final Project project;
-  final PathService pathService;
   final List<Editor> editors;
   final VoidCallback onLaunchVSCode;
   final VoidCallback onLaunchCursor;
@@ -395,10 +402,9 @@ class ProjectCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const ProjectCard({
+  const ProjectGridItem({
     super.key,
     required this.project,
-    required this.pathService,
     required this.editors,
     required this.onLaunchVSCode,
     required this.onLaunchCursor,
@@ -408,168 +414,157 @@ class ProjectCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  Widget _getEditorIcon(String editorName, {double size = 24.0}) {
-    // VS Code icon - use actual SVG
-    if (editorName.toLowerCase().contains('vs code') || 
-        editorName.toLowerCase().contains('code')) {
+  Widget _getEditorIcon(String editorName, {double size = 20.0}) {
+    String lowerCaseEditorName = editorName.toLowerCase();
+
+    if (lowerCaseEditorName.contains('vs code') ||
+        lowerCaseEditorName.contains('code')) {
       return SvgPicture.asset(
         'assets/icons/vscode.svg',
         width: size,
         height: size,
-        // ignore: deprecated_member_use
-        color: null, // Don't apply color to preserve original colors
       );
     }
-    
-    // Cursor AI Editor icon - use actual SVG
-    if (editorName.toLowerCase().contains('cursor')) {
+    if (lowerCaseEditorName.contains('cursor')) {
       return SvgPicture.asset(
         'assets/icons/cursor.svg',
         width: size,
         height: size,
-        // ignore: deprecated_member_use
-        color: null, // Don't apply color to preserve original colors
       );
     }
-    
-    // Windsurf IDE icon - use actual SVG
-    if (editorName.toLowerCase().contains('windsurf')) {
+    if (lowerCaseEditorName.contains('windsurf')) {
       return SvgPicture.asset(
         'assets/icons/windsurf.svg',
         width: size,
         height: size,
-        // ignore: deprecated_member_use
-        color: null, // Don't apply color to preserve original colors
       );
     }
-    
-    // Default icon for unknown editors
     return Icon(Icons.code, size: size, color: Colors.grey);
   }
 
-  Widget _getSvgIcon(String assetPath, {double size = 24.0, Color? color}) {
-    return SvgPicture.asset(
-      assetPath,
-      width: size,
-      height: size,
-      // ignore: deprecated_member_use
-      color: color, // Apply the color for edit/delete icons
-    );
-  }
-
   bool _hasEditor(String editorName) {
-    return editors.any((editor) => 
-      editor.name.toLowerCase() == editorName.toLowerCase());
+    return editors.any(
+      (editor) => editor.name.toLowerCase() == editorName.toLowerCase(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.all(1),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header row: Group title (replaces folder icon) + Project name + manipulate buttons
-            Row(
-              children: [
-                // Group title replaces folder icon
-                if (project.group != null) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      project.group!.toUpperCase(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 8,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onLaunchWithDefault,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
+          child: Row(
+            children: [
+              // Left section: Group and Project Name
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (project.group != null && project.group!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.secondaryContainer.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            project.group!,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onSecondaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Expanded(
-                  child: GestureDetector(
-                    onTap: onLaunchWithDefault,
-                    child: Text(
+                    Text(
                       project.name,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ),
-                // Manipulate group (right side)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: onEdit,
-                      icon: _getSvgIcon('assets/icons/edit.svg', 
-                          color: Theme.of(context).colorScheme.primary),
-                      tooltip: 'Edit Project',
-                      splashRadius: 10,
-                      iconSize: 14,
-                      padding: const EdgeInsets.all(2),
-                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                    ),
-                    IconButton(
-                      onPressed: onDelete,
-                      icon: _getSvgIcon('assets/icons/delete.svg', 
-                          color: Theme.of(context).colorScheme.error),
-                      tooltip: 'Delete Project',
-                      splashRadius: 10,
-                      iconSize: 14,
-                      padding: const EdgeInsets.all(2),
-                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                    ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            // Editor group (left side, under project name)
-            Row(
-              children: [
-                // VS Code
-                IconButton(
-                  onPressed: _hasEditor('VS Code') ? onLaunchVSCode : null,
-                  icon: _getEditorIcon('VS Code', size: 16),
-                  tooltip: _hasEditor('VS Code') ? 'Open with VS Code' : 'VS Code not available',
-                  splashRadius: 10,
-                  padding: const EdgeInsets.all(2),
-                  constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                ),
-                // Cursor
-                IconButton(
-                  onPressed: _hasEditor('Cursor') ? onLaunchCursor : null,
-                  icon: _getEditorIcon('Cursor', size: 16),
-                  tooltip: _hasEditor('Cursor') ? 'Open with Cursor' : 'Cursor not available',
-                  splashRadius: 10,
-                  padding: const EdgeInsets.all(2),
-                  constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                ),
-                // Windsurf
-                IconButton(
-                  onPressed: _hasEditor('Windsurf') ? onLaunchWindsurf : null,
-                  icon: _getEditorIcon('Windsurf', size: 16),
-                  tooltip: _hasEditor('Windsurf') ? 'Open with Windsurf' : 'Windsurf not available',
-                  splashRadius: 10,
-                  padding: const EdgeInsets.all(2),
-                  constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(width: 16),
+              // Right section: Action icons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_hasEditor('VS Code'))
+                    IconButton(
+                      onPressed: onLaunchVSCode,
+                      icon: _getEditorIcon('VS Code'),
+                      tooltip: 'Launch in VS Code',
+                      iconSize: 20,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                    ),
+                  if (_hasEditor('Cursor'))
+                    IconButton(
+                      onPressed: onLaunchCursor,
+                      icon: _getEditorIcon('Cursor'),
+                      tooltip: 'Launch in Cursor',
+                      iconSize: 20,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                    ),
+                  if (_hasEditor('Windsurf'))
+                    IconButton(
+                      onPressed: onLaunchWindsurf,
+                      icon: _getEditorIcon('Windsurf'),
+                      tooltip: 'Launch in Windsurf',
+                      iconSize: 20,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                    ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') onEdit();
+                      if (value == 'delete') onDelete();
+                    },
+                    itemBuilder:
+                        (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: ListTile(
+                              leading: Icon(Icons.edit_outlined),
+                              title: Text('Edit'),
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: ListTile(
+                              leading: Icon(Icons.delete_outline),
+                              title: Text('Delete'),
+                            ),
+                          ),
+                        ],
+                    icon: const Icon(Icons.more_vert),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
