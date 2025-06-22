@@ -27,25 +27,20 @@ class DatabaseService {
   }
 
   Future<void> _initializeSqlite() async {
-    AppLogger.info('🔧 Initializing SQLite for desktop...');
     
     // Initialize SQLite for desktop platforms
     if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
-      AppLogger.info('✅ SQLite FFI initialized for desktop');
     } else {
-      AppLogger.info('📱 Using standard SQLite for mobile');
     }
   }
 
   Future<Database> _initDatabase() async {
     try {
-      AppLogger.info('📁 Initializing database...');
       final documentsDirectory = await getApplicationDocumentsDirectory();
       final path = join(documentsDirectory.path, 'project_manager.db');
       
-      AppLogger.info('💾 Database path: $path');
       
       return await openDatabase(
         path,
@@ -59,7 +54,6 @@ class DatabaseService {
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    AppLogger.info('🔨 Creating database tables...');
     await db.execute('''
       CREATE TABLE projects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

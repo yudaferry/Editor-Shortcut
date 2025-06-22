@@ -1,7 +1,7 @@
-# Flutter Project Manager - Comprehensive Documentation
+# Flutter Editor Shortcut - Comprehensive Documentation
 
 ## Project Overview
-**Flutter Project Manager** is a cross-platform desktop application built with Flutter that serves as a centralized hub for managing development projects. The application allows users to organize projects, configure code editors, and launch projects directly from a unified interface.
+**Flutter Editor Shortcut** is a cross-platform desktop application built with Flutter that serves as a centralized hub for managing development projects. The application allows users to organize projects, configure code editors, and launch projects directly from a unified interface.
 
 ### Core Features
 1. **Project Management**
@@ -299,7 +299,7 @@ CREATE TABLE project_groups (
 ## 🔍 Startup Messages Reference
 
 ### Normal Messages
-- ✅ **"🚀 Project Manager App starting..."** - Application initialization
+- ✅ **"🚀 Editor Shortcut App starting..."** - Application initialization
 - ✅ **"🔧 Initializing SQLite for desktop..."** - Database setup
 - ✅ **"✅ SQLite FFI initialized for desktop"** - Database ready
 - ✅ **"🔨 Creating database tables..."** - First-time setup
@@ -465,7 +465,7 @@ flutter build macos            # macOS release build
 
 ## 🎯 Conclusion
 
-This Flutter Project Manager represents a complete, production-ready desktop application with recent UI/UX enhancements:
+This Flutter Editor Shortcut represents a complete, production-ready desktop application with recent UI/UX enhancements:
 
 - ✅ **Full cross-platform support** (Windows, Linux, macOS)
 - ✅ **Comprehensive feature set** for project management

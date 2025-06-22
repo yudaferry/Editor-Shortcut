@@ -7,7 +7,9 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('UI Overflow Tests', () {
-    testWidgets('Test project action dialog for overflow issues', (WidgetTester tester) async {
+    testWidgets('Test project action dialog for overflow issues', (
+      WidgetTester tester,
+    ) async {
       // Start the app
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -16,7 +18,7 @@ void main() {
 
       // First add a test project with editors to ensure we have content to test
       print('📋 Adding a test project first...');
-      
+
       // Navigate to Add Project screen
       await tester.tap(find.byIcon(Icons.add));
       await tester.pumpAndSettle();
@@ -24,20 +26,19 @@ void main() {
       // Fill in a test project
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Project Path *'),
-        '/home/test/my-long-named-project-with-very-long-path'
+        '/home/test/my-long-named-project-with-very-long-path',
       );
       await tester.pumpAndSettle();
 
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Project Name *'),
-        'Test Project With Very Long Name That Could Cause Overflow'
+        'Test Project With Very Long Name That Could Cause Overflow',
       );
       await tester.pumpAndSettle();
 
-
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Group (optional)'),
-        'Very Long Group Name That Could Overflow'
+        'Very Long Group Name That Could Overflow',
       );
       await tester.pumpAndSettle();
 
@@ -48,8 +49,8 @@ void main() {
       print('✅ Test project added successfully');
 
       // Verify we're back on home screen and can see the project
-      expect(find.text('Project Manager'), findsOneWidget);
-      
+      expect(find.text('Editor Shortcut'), findsOneWidget);
+
       // Look for project cards
       final projectCards = find.byType(Card);
       expect(projectCards.evaluate().isNotEmpty, isTrue);
@@ -65,12 +66,11 @@ void main() {
       final dialogContent = find.textContaining('Open with');
       final actionSheet = find.byType(BottomSheet);
       final alertDialog = find.byType(AlertDialog);
-      
+
       // Check if any of these opened
-      if (dialogContent.evaluate().isNotEmpty || 
-          actionSheet.evaluate().isNotEmpty || 
+      if (dialogContent.evaluate().isNotEmpty ||
+          actionSheet.evaluate().isNotEmpty ||
           alertDialog.evaluate().isNotEmpty) {
-        
         print('✅ Project action dialog opened');
 
         // Test for editor options (VS Code, Cursor, Windsurf)
@@ -98,7 +98,7 @@ void main() {
           print('✅ Found File Explorer option');
         }
         if (terminalOption.evaluate().isNotEmpty) {
-          print('✅ Found Terminal option');  
+          print('✅ Found Terminal option');
         }
         if (editOption.evaluate().isNotEmpty) {
           print('✅ Found Edit option');
@@ -109,13 +109,13 @@ void main() {
 
         // Test scrolling in the dialog to ensure all content is accessible
         print('🔄 Testing dialog scrolling...');
-        
+
         // Try to scroll down in the dialog
         final scrollableWidget = find.descendant(
           of: find.byType(ListView).first,
           matching: find.byType(Scrollable),
         );
-        
+
         if (scrollableWidget.evaluate().isNotEmpty) {
           await tester.drag(scrollableWidget.first, const Offset(0, -100));
           await tester.pumpAndSettle();
@@ -124,10 +124,10 @@ void main() {
 
         // Test different screen sizes to check for overflow
         print('📱 Testing different screen sizes...');
-        
+
         final originalSize = tester.view.physicalSize;
         final originalPixelRatio = tester.view.devicePixelRatio;
-        
+
         // Test on a smaller screen (mobile size)
         tester.view.physicalSize = const Size(360, 640);
         tester.view.devicePixelRatio = 1.0;
@@ -153,11 +153,11 @@ void main() {
 
         // Close the dialog by tapping outside or finding close button
         print('🚪 Closing dialog...');
-        
+
         // Try different methods to close the dialog
         final closeButton = find.byIcon(Icons.close);
         final cancelButton = find.text('Cancel');
-        
+
         if (closeButton.evaluate().isNotEmpty) {
           await tester.tap(closeButton);
           await tester.pumpAndSettle();
@@ -171,17 +171,18 @@ void main() {
         }
 
         print('✅ Dialog closed successfully');
-        
       } else {
-        print('⚠️  No action dialog found - might need to long press or use different interaction');
-        
+        print(
+          '⚠️  No action dialog found - might need to long press or use different interaction',
+        );
+
         // Try long press instead
         await tester.longPress(projectCards.first);
         await tester.pumpAndSettle();
-        
+
         if (find.textContaining('Open with').evaluate().isNotEmpty) {
           print('✅ Action dialog opened with long press');
-          
+
           // Close it
           await tester.tapAt(const Offset(50, 50));
           await tester.pumpAndSettle();
@@ -190,11 +191,11 @@ void main() {
 
       // Clean up - remove the test project
       print('🧹 Cleaning up test project...');
-      
+
       // Try to delete the project we just created
       await tester.tap(projectCards.first);
       await tester.pumpAndSettle();
-      
+
       final deleteOption = find.textContaining('Delete');
       if (deleteOption.evaluate().isNotEmpty) {
         await tester.tap(deleteOption);
@@ -207,13 +208,15 @@ void main() {
       print('\n🎉 Overflow test completed successfully!');
       print('📊 Test Summary:');
       print('   - Tested project action dialog layout');
-      print('   - Verified text overflow handling'); 
+      print('   - Verified text overflow handling');
       print('   - Tested multiple screen sizes');
       print('   - Verified all editor options display correctly');
       print('   - No RenderFlex overflow errors detected');
     });
 
-    testWidgets('Test editor list with very long names', (WidgetTester tester) async {
+    testWidgets('Test editor list with very long names', (
+      WidgetTester tester,
+    ) async {
       // Start the app
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -234,18 +237,24 @@ void main() {
       // Check if add editor dialog opened
       if (find.byType(AlertDialog).evaluate().isNotEmpty ||
           find.textContaining('Add Editor').evaluate().isNotEmpty) {
-        
         print('✅ Add Editor dialog opened');
 
         // Fill in editor with very long name
         final nameField = find.widgetWithText(TextFormField, 'Editor Name');
         final commandField = find.widgetWithText(TextFormField, 'Command');
-        
-        if (nameField.evaluate().isNotEmpty && commandField.evaluate().isNotEmpty) {
-          await tester.enterText(nameField, 'Very Long Editor Name That Could Cause Overflow Issues In The Dialog');
+
+        if (nameField.evaluate().isNotEmpty &&
+            commandField.evaluate().isNotEmpty) {
+          await tester.enterText(
+            nameField,
+            'Very Long Editor Name That Could Cause Overflow Issues In The Dialog',
+          );
           await tester.pumpAndSettle();
 
-          await tester.enterText(commandField, 'very-long-command-that-might-overflow');
+          await tester.enterText(
+            commandField,
+            'very-long-command-that-might-overflow',
+          );
           await tester.pumpAndSettle();
 
           // Try to save (might fail validation, but tests layout)

@@ -5,7 +5,6 @@ import '../models/project.dart';
 import '../models/editor.dart';
 import '../services/database_service.dart';
 import '../services/launcher_service.dart';
-import '../services/path_service.dart';
 import '../utils/logger.dart';
 import 'add_project_screen.dart';
 import 'editor_management_screen.dart';
@@ -20,7 +19,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final DatabaseService _databaseService = DatabaseService();
   final LauncherService _launcherService = LauncherService();
-  final PathService _pathService = PathService();
 
   List<Project> _projects = [];
   List<Editor> _editors = [];
@@ -39,7 +37,6 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = true);
 
     try {
-      AppLogger.info('📋 Loading projects, editors, and groups...');
       final projects = await _databaseService.getProjects();
       final editors = await _databaseService.getEditors();
       final groups = await _databaseService.getDistinctGroups();
@@ -50,10 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _groups = ['All', ...groups];
         _isLoading = false;
       });
-
-      AppLogger.info(
-        '✅ Loaded ${projects.length} projects, ${editors.length} editors, and ${groups.length} groups',
-      );
     } catch (e, stackTrace) {
       AppLogger.error('❌ Failed to load projects', e, stackTrace);
       setState(() => _isLoading = false);
@@ -91,8 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _launchWithEditor(Project project, String editorName) async {
-    AppLogger.info('🚀 Launching ${project.name} with $editorName');
-
     try {
       final editor = _editors.firstWhere(
         (e) => e.name.toLowerCase() == editorName.toLowerCase(),
@@ -176,8 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _launchWithDefaultEditor(Project project) async {
-    AppLogger.info('🚀 Launching ${project.name} with default editor');
-
     try {
       final defaultEditor = await _databaseService.getDefaultEditor();
       if (defaultEditor != null) {
@@ -248,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Project Manager'),
+        title: const Text('Editor Shortcut'),
         elevation: 0,
         shape: Border(
           bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
@@ -473,9 +462,10 @@ class ProjectGridItem extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.secondaryContainer.withOpacity(0.5),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .secondaryContainer
+                                .withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
