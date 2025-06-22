@@ -16,8 +16,13 @@ class LauncherService {
       final projectPath = await _pathService.getExecutablePath(project.path);
       
       // Validate that the project path exists
-      if (!await _pathService.pathExists(projectPath)) {
+      if (!await _pathService.pathExists(project.path)) {
         throw Exception('Project path does not exist: ${project.path}');
+      }
+
+      // Check if we need to launch via WSL (Windows with Linux path)
+      if (Platform.isWindows && project.path.startsWith('/') && !project.path.startsWith('/mnt/')) {
+        return await _launchProjectViaWsl(project, editor);
       }
 
       // Build the command arguments
@@ -51,15 +56,55 @@ class LauncherService {
     }
   }
 
+  /// Launches a project via WSL when running on Windows with Linux paths
+  Future<bool> _launchProjectViaWsl(Project project, Editor editor) async {
+    try {
+      // Build WSL command: wsl -d Ubuntu -- editor arguments path
+      final List<String> wslArgs = [];
+      
+      // Add custom arguments if specified
+      if (editor.arguments != null && editor.arguments!.isNotEmpty) {
+        wslArgs.addAll(editor.arguments!.split(' '));
+      }
+      
+      // Add the project path (keep as Linux path for WSL)
+      wslArgs.add(project.path);
+
+      // Launch via WSL
+      final result = await Process.run(
+        'wsl',
+        ['--', editor.command, ...wslArgs],
+        runInShell: true,
+      );
+
+      // Check if the command was successful
+      if (result.exitCode == 0) {
+        return true;
+      } else {
+        print('WSL editor launch failed: ${result.stderr}');
+        return false;
+      }
+    } catch (e) {
+      print('Error launching project via WSL: $e');
+      return false;
+    }
+  }
+
   /// Launches a project with the specified editor (non-blocking)
   Future<bool> launchProjectAsync(Project project, Editor editor) async {
     try {
-      final projectPath = await _pathService.getExecutablePath(project.path);
-      
       // Validate that the project path exists
-      if (!await _pathService.pathExists(projectPath)) {
+      if (!await _pathService.pathExists(project.path)) {
         throw Exception('Project path does not exist: ${project.path}');
       }
+
+      // Check if we need to launch via WSL (Windows with Linux path)
+      if (Platform.isWindows && project.path.startsWith('/') && !project.path.startsWith('/mnt/')) {
+        return await _launchProjectAsyncViaWsl(project, editor);
+      }
+
+      // Get the appropriate executable path for this environment
+      final projectPath = await _pathService.getExecutablePath(project.path);
 
       // Build the command arguments
       final List<String> arguments = [];
@@ -83,6 +128,35 @@ class LauncherService {
       return true;
     } catch (e) {
       print('Error launching project: $e');
+      return false;
+    }
+  }
+
+  /// Launches a project via WSL when running on Windows with Linux paths (non-blocking)
+  Future<bool> _launchProjectAsyncViaWsl(Project project, Editor editor) async {
+    try {
+      // Build WSL command: wsl -d Ubuntu -- editor arguments path
+      final List<String> wslArgs = [];
+      
+      // Add custom arguments if specified
+      if (editor.arguments != null && editor.arguments!.isNotEmpty) {
+        wslArgs.addAll(editor.arguments!.split(' '));
+      }
+      
+      // Add the project path (keep as Linux path for WSL)
+      wslArgs.add(project.path);
+
+      // Launch via WSL
+      await Process.start(
+        'wsl',
+        ['--', editor.command, ...wslArgs],
+        runInShell: true,
+        mode: ProcessStartMode.detached,
+      );
+
+      return true;
+    } catch (e) {
+      print('Error launching project via WSL: $e');
       return false;
     }
   }

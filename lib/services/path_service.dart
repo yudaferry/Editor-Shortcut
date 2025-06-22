@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 class PathService {
   static final PathService _instance = PathService._internal();
@@ -61,6 +62,51 @@ class PathService {
     }
   }
 
+  /// Checks if WSL is available on Windows
+  Future<bool> isWslAvailable() async {
+    if (!Platform.isWindows) return false;
+    
+    try {
+      final result = await Process.run('wsl', ['--status'], 
+        runInShell: true);
+      return result.exitCode == 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Executes a command in WSL from Windows
+  Future<ProcessResult> runWslCommand(List<String> command) async {
+    if (!Platform.isWindows) {
+      throw UnsupportedError('WSL commands can only be run from Windows');
+    }
+    
+    return await Process.run('wsl', command, runInShell: true);
+  }
+
+  /// Checks if a Linux path exists via WSL (when running on Windows)
+  Future<bool> pathExistsViaWsl(String linuxPath) async {
+    try {
+      final result = await runWslCommand(['test', '-e', linuxPath]);
+      return result.exitCode == 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Gets project indicators via WSL (when running on Windows)
+  Future<bool> hasProjectIndicatorsViaWsl(String linuxPath) async {
+    try {
+      for (final indicator in projectIndicators) {
+        final result = await runWslCommand(['test', '-e', '$linuxPath/$indicator']);
+        if (result.exitCode == 0) return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /// Validates if a path exists (works for both Windows and WSL paths)
   Future<bool> pathExists(String path) async {
     try {
@@ -81,6 +127,13 @@ class PathService {
         return await Directory(windowsPath).exists() || await File(windowsPath).exists();
       }
 
+      // If on Windows and path looks like Linux path, try via WSL
+      if (Platform.isWindows && path.startsWith('/') && !path.startsWith('/mnt/')) {
+        if (await isWslAvailable()) {
+          return await pathExistsViaWsl(path);
+        }
+      }
+
       return false;
     } catch (e) {
       return false;
@@ -97,6 +150,11 @@ class PathService {
     // If on Windows and path is WSL format, convert to Windows
     if (Platform.isWindows && path.startsWith('/mnt/')) {
       return wslToWindows(path);
+    }
+    
+    // If on Windows and path is Linux path, return as-is for WSL execution
+    if (Platform.isWindows && path.startsWith('/') && !path.startsWith('/mnt/')) {
+      return path;
     }
     
     return path;
@@ -163,20 +221,40 @@ class PathService {
   /// Checks if directory contains project indicators
   Future<bool> hasProjectIndicators(String path) async {
     try {
+      // Try direct access first
       final directory = Directory(path);
-      final contents = await directory.list().toList();
+      if (await directory.exists()) {
+        final contents = await directory.list().toList();
+        
+        for (final indicator in projectIndicators) {
+          final exists = contents.any((entity) => 
+            entity.path.endsWith(indicator) || 
+            entity.path.endsWith('/$indicator') ||
+            entity.path.endsWith('\\$indicator')
+          );
+          if (exists) return true;
+        }
+      }
       
-      for (final indicator in projectIndicators) {
-        final exists = contents.any((entity) => 
-          entity.path.endsWith(indicator) || 
-          entity.path.endsWith('/$indicator') ||
-          entity.path.endsWith('\\$indicator')
-        );
-        if (exists) return true;
+      // If direct access failed and we're on Windows with Linux path, try WSL
+      if (Platform.isWindows && path.startsWith('/') && !path.startsWith('/mnt/')) {
+        if (await isWslAvailable()) {
+          return await hasProjectIndicatorsViaWsl(path);
+        }
       }
       
       return false;
     } catch (e) {
+      // If direct access failed and we're on Windows with Linux path, try WSL
+      if (Platform.isWindows && path.startsWith('/') && !path.startsWith('/mnt/')) {
+        try {
+          if (await isWslAvailable()) {
+            return await hasProjectIndicatorsViaWsl(path);
+          }
+        } catch (wslError) {
+          return false;
+        }
+      }
       return false;
     }
   }

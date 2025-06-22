@@ -403,8 +403,19 @@ class ProjectGridItem extends StatelessWidget {
     required this.onDelete,
   });
 
-  Widget _getEditorIcon(String editorName, {double size = 20.0}) {
+  Widget _getEditorIcon(
+    String editorName,
+    BuildContext context, {
+    double size = 20.0,
+  }) {
     String lowerCaseEditorName = editorName.toLowerCase();
+
+    // Get appropriate color based on theme
+    Color iconColor =
+        Theme.of(context).brightness == Brightness.dark
+            ? Colors
+                .white70 // Light color for dark mode
+            : Colors.black87; // Dark color for light mode
 
     if (lowerCaseEditorName.contains('vs code') ||
         lowerCaseEditorName.contains('code')) {
@@ -412,6 +423,7 @@ class ProjectGridItem extends StatelessWidget {
         'assets/icons/vscode.svg',
         width: size,
         height: size,
+        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       );
     }
     if (lowerCaseEditorName.contains('cursor')) {
@@ -419,6 +431,7 @@ class ProjectGridItem extends StatelessWidget {
         'assets/icons/cursor.svg',
         width: size,
         height: size,
+        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       );
     }
     if (lowerCaseEditorName.contains('windsurf')) {
@@ -426,6 +439,7 @@ class ProjectGridItem extends StatelessWidget {
         'assets/icons/windsurf.svg',
         width: size,
         height: size,
+        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       );
     }
     return Icon(Icons.code, size: size, color: Colors.grey);
@@ -444,7 +458,7 @@ class ProjectGridItem extends StatelessWidget {
       child: InkWell(
         onTap: onLaunchWithDefault,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
           child: Row(
             children: [
               // Left section: Group and Project Name
@@ -452,21 +466,22 @@ class ProjectGridItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     if (project.group != null && project.group!.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 4.0),
+                        padding: const EdgeInsets.only(bottom: 2.0),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
+                            horizontal: 6,
+                            vertical: 1,
                           ),
                           decoration: BoxDecoration(
                             color: Theme.of(context)
                                 .colorScheme
                                 .secondaryContainer
                                 .withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             project.group!,
@@ -478,17 +493,20 @@ class ProjectGridItem extends StatelessWidget {
                                     context,
                                   ).colorScheme.onSecondaryContainer,
                               fontWeight: FontWeight.bold,
+                              fontSize: 10,
                             ),
                           ),
                         ),
                       ),
-                    Text(
-                      project.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        project.name,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -501,7 +519,7 @@ class ProjectGridItem extends StatelessWidget {
                   if (_hasEditor('VS Code'))
                     IconButton(
                       onPressed: onLaunchVSCode,
-                      icon: _getEditorIcon('VS Code'),
+                      icon: _getEditorIcon('VS Code', context),
                       tooltip: 'Launch in VS Code',
                       iconSize: 20,
                       padding: const EdgeInsets.all(4),
@@ -510,7 +528,7 @@ class ProjectGridItem extends StatelessWidget {
                   if (_hasEditor('Cursor'))
                     IconButton(
                       onPressed: onLaunchCursor,
-                      icon: _getEditorIcon('Cursor'),
+                      icon: _getEditorIcon('Cursor', context),
                       tooltip: 'Launch in Cursor',
                       iconSize: 20,
                       padding: const EdgeInsets.all(4),
@@ -519,7 +537,7 @@ class ProjectGridItem extends StatelessWidget {
                   if (_hasEditor('Windsurf'))
                     IconButton(
                       onPressed: onLaunchWindsurf,
-                      icon: _getEditorIcon('Windsurf'),
+                      icon: _getEditorIcon('Windsurf', context),
                       tooltip: 'Launch in Windsurf',
                       iconSize: 20,
                       padding: const EdgeInsets.all(4),

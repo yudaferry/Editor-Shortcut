@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/project.dart';
 import '../services/database_service.dart';
@@ -36,9 +37,35 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     _pathController = TextEditingController(text: widget.project?.path ?? '');
     _groupController = TextEditingController(text: widget.project?.group ?? '');
 
+    _detectDefaultPlatform();
     _loadExistingGroups();
     if (_pathController.text.isNotEmpty) {
       _validatePath(_pathController.text);
+    }
+  }
+
+  Future<void> _detectDefaultPlatform() async {
+    // If editing existing project, detect platform from path
+    if (widget.project != null) {
+      final path = widget.project!.path;
+      if (path.contains(':') || path.startsWith('C:\\')) {
+        _selectedPlatform = 'windows';
+      } else {
+        _selectedPlatform = 'wsl';
+      }
+      return;
+    }
+
+    // For new projects, default to WSL on Windows if WSL is available
+    if (Platform.isWindows) {
+      final wslAvailable = await _pathService.isWslAvailable();
+      _selectedPlatform = wslAvailable ? 'wsl' : 'windows';
+    } else {
+      _selectedPlatform = 'wsl'; // Keep as WSL for Linux environments
+    }
+    
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -143,7 +170,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                 style: TextButton.styleFrom(
                   textStyle: Theme.of(context).textTheme.headlineSmall,
                   overlayColor: Colors.transparent,
-                  foregroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Theme.of(context).colorScheme.primary,
                 ),
                 child: Text(isEditing ? 'Update' : 'Save'),
               ),
