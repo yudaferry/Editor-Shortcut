@@ -2,18 +2,24 @@
 
 ## Current Focus
 
-The current focus is on understanding the existing codebase and establishing a baseline for future
-development. This involves documenting the project structure, dependencies, and overall
-architecture.
+The project is now in a stable state with all major build issues resolved. The app successfully
+builds and runs on Windows with proper SQLite integration and custom iconography.
 
 ## Next Steps
 
-- Review the existing UI and business logic in detail.
-- Create a development plan and product roadmap.
-- Identify areas for improvement or refactoring.
+- Implement multi-category support for projects, including data migration.
+- Add a "scan folder" feature to automatically detect and import projects.
+- Continue with general feature development and testing.
+- Refine UI/UX based on user feedback.
+- Implement comprehensive error handling and logging.
+- Consider adding support for additional platforms (macOS, Linux).
 
 ## Learnings
 
 - The project is a Flutter desktop application for Windows.
-- It uses SQLite for local data storage.
+- It uses SQLite for local data storage via `sqflite_common_ffi`.
 - The architecture separates UI, logic, and data concerns.
+- SVG icons were successfully migrated to PNG format to resolve rendering issues.
+- A custom app icon has been created and applied using `flutter_launcher_icons`.
+- The build process works reliably without hardcoded paths.
+- SVG files are preserved alongside PNG versions for flexibility.

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:window_manager/window_manager.dart';
 import '../models/project.dart';
 import '../models/editor.dart';
@@ -419,27 +419,27 @@ class ProjectGridItem extends StatelessWidget {
 
     if (lowerCaseEditorName.contains('vs code') ||
         lowerCaseEditorName.contains('code')) {
-      return SvgPicture.asset(
-        'assets/icons/vscode.svg',
+      return Image.asset(
+        'assets/icons/vscode.png',
         width: size,
         height: size,
-        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        color: iconColor,
       );
     }
     if (lowerCaseEditorName.contains('cursor')) {
-      return SvgPicture.asset(
-        'assets/icons/cursor.svg',
+      return Image.asset(
+        'assets/icons/cursor.png',
         width: size,
         height: size,
-        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        color: iconColor,
       );
     }
     if (lowerCaseEditorName.contains('windsurf')) {
-      return SvgPicture.asset(
-        'assets/icons/windsurf.svg',
+      return Image.asset(
+        'assets/icons/windsurf.png',
         width: size,
         height: size,
-        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        color: iconColor,
       );
     }
     return Icon(Icons.code, size: size, color: Colors.grey);
