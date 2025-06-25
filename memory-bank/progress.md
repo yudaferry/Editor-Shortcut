@@ -8,6 +8,8 @@
 - The application can be launched on Windows.
 - The application now has a custom icon.
 - The rendering issue with SVG icons has been resolved by migrating to PNGs.
+- Clean window configuration with visible title bar but hidden close/maximize buttons.
+- Window title bar integration for dragging and system menu access.
 
 ## What's Left to Build
 
@@ -24,4 +26,5 @@
 
 ## Known Issues
 
-- None currently identified. The app builds and runs successfully on Windows.
+- None currently identified. The app builds and runs successfully on Windows with borderless window
+  configuration.

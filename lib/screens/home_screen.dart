@@ -157,15 +157,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _toggleFullScreen() async {
-    bool isFullScreen = await windowManager.isFullScreen();
-    if (isFullScreen) {
-      await windowManager.setFullScreen(false);
-    } else {
-      await windowManager.setFullScreen(true);
-    }
-  }
-
   Future<void> _launchWithDefaultEditor(Project project) async {
     try {
       final defaultEditor = await _databaseService.getDefaultEditor();
@@ -253,16 +244,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             icon: const Icon(Icons.edit_note_outlined),
             label: const Text('Editors'),
-          ),
-          IconButton(
-            onPressed: _toggleFullScreen,
-            icon: const Icon(Icons.fullscreen),
-            tooltip: 'Toggle Full Screen',
-          ),
-          IconButton(
-            onPressed: () => windowManager.close(),
-            icon: const Icon(Icons.close),
-            tooltip: 'Close Window',
           ),
           const SizedBox(width: 8),
         ],

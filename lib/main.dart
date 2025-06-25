@@ -10,13 +10,13 @@ void main() async {
   // Initialize window manager for desktop
   await windowManager.ensureInitialized();
 
-  // Configure window settings - remove title bar
+  // Configure window settings - hide window buttons but keep title bar
   WindowOptions windowOptions = const WindowOptions(
     size: Size(1200, 800),
     center: true,
     backgroundColor: Colors.transparent,
-    // titleBarStyle: TitleBarStyle.hidden, // Hide OS title bar
-    // windowButtonVisibility: false, // Hide window buttons
+    // titleBarStyle: TitleBarStyle.hidden, // Keep OS title bar visible
+    windowButtonVisibility: false, // Hide window buttons (close, maximize)
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
