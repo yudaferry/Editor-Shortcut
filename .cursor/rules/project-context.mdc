@@ -1,0 +1,19 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Overview
+
+When you need to understand the project's goals, architecture, or current status, **then** you should consult these files first.
+
+- **Project Brief**: [projectbrief.md](mdc:memory-bank/projectbrief.md) - What is this project about?
+- **Product Context**: [productContext.md](mdc:memory-bank/productContext.md) - Why does this project exist?
+- **Tech Context**: [techContext.md](mdc:memory-bank/techContext.md) - What technologies are used?
+- **System Patterns**: [systemPatterns.md](mdc:memory-bank/systemPatterns.md) - How is the project structured?
+- **Active Context**: [activeContext.md](mdc:memory-bank/activeContext.md) - What is the current focus?
+- **Progress**: [progress.md](mdc:memory-bank/progress.md) - What is the current status?
+
+## Boundaries
+
+- Never run the project, when: you want to test the changes, then: inform me to run the project
